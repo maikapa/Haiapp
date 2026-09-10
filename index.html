@@ -46,7 +46,15 @@
 
   // ---------------------------------------------------------------- Konstanten
 
-  var FISH_PER_CARD = 20;    // alle 20 Punkte eine Aufstiegskarte
+  // Bei diesen Punktstaenden kommt eine Karte. Die Abstaende werden groesser,
+  // im Bosskampf kommt also nur noch selten eine.
+  var CARD_POINTS = [20, 50, 80, 130, 190, 260];
+  var CARD_STEP = 90;               // danach alle 90 Punkte
+
+  function cardThreshold(idx) {
+    if (idx < CARD_POINTS.length) return CARD_POINTS[idx];
+    return CARD_POINTS[CARD_POINTS.length - 1] + CARD_STEP * (idx - CARD_POINTS.length + 1);
+  }
   var FISH_FOR_BOSS = 90;    // ab 90 Punkten taucht der Boss auf
   var MAX_LEVEL = 5;
   var MAX_BONUS = 2;         // hoechste dauerhafte Startstufe je Faehigkeit
@@ -195,7 +203,7 @@
     fx: {},             // laufende Effekte der Knopf-Faehigkeit
     ab: {},            // Faehigkeiten im laufenden Tauchgang
     diveFish: 0,
-    nextCard: FISH_PER_CARD,
+    cardIdx: 0,
     cards: [],
     newShark: -1,
     t: 0
@@ -1154,7 +1162,7 @@
   function startDive() {
     S.screen = 'game';
     S.diveFish = 0;
-    S.nextCard = FISH_PER_CARD;
+    S.cardIdx = 0;
     S.ab = {};
     for (var k in S.boni) { if (S.boni.hasOwnProperty(k)) S.ab[k] = S.boni[k]; }
 
@@ -1168,7 +1176,7 @@
     // angefangener Tauchgang derselben Tiefe und desselben Hais wird fortgesetzt
     if (S.dive && S.dive.depth === S.stage && S.dive.shark === S.sharkIdx) {
       S.diveFish = S.dive.fish;
-      S.nextCard = S.dive.next;
+      S.cardIdx = S.dive.card || 0;
       S.ab = S.dive.ab;
     }
     S.dive = null;
@@ -1176,7 +1184,6 @@
     S.fx = { intro: 3.2 };
     ring = null;
     trail = [];
-    showDemo = null;
     shark.x = W * 0.5; shark.y = H * 0.5; shark.ang = 0;
     shark.stun = 0; shark.mouth = 0;
     shark.shield = lvl('blase') > 0 ? 1 : 0;
@@ -1196,7 +1203,7 @@
   // Zwischenstand des Tauchgangs wegschreiben, damit nichts verlorengeht
   function stashDive() {
     if (S.screen !== 'game' && S.screen !== 'cards') return;
-    S.dive = { depth: S.stage, shark: S.sharkIdx, fish: S.diveFish, next: S.nextCard, ab: S.ab };
+    S.dive = { depth: S.stage, shark: S.sharkIdx, fish: S.diveFish, card: S.cardIdx, ab: S.ab };
     saveProfile();
   }
 
@@ -1216,7 +1223,7 @@
     var plates = [];
     var n = 8;
     for (var i = 0; i < n; i++) {
-      plates.push({ a: (6.2832 / n) * i, hp: 3, alive: true, flash: 0 });
+      plates.push({ a: (6.2832 / n) * i, hp: 2, alive: true, flash: 0 });
     }
     boss = {
       kind: setup.body,
@@ -1470,13 +1477,13 @@
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(a + Math.PI / 2);
-      var dmg = 1 - p.hp / 3;
+      var dmg = 1 - p.hp / 2;
       ctx.fillStyle = p.flash > 0 ? '#FFFFFF' : (dmg > 0.6 ? '#9C8F72' : (dmg > 0.3 ? '#BFB393' : '#E8E0C8'));
       roundRect(-24, -13, 48, 26, 8); ctx.fill();
       ctx.strokeStyle = 'rgba(60,50,35,0.5)';
       ctx.lineWidth = 2;
       roundRect(-24, -13, 48, 26, 8); ctx.stroke();
-      if (p.hp <= 2) {
+      if (p.hp <= 1) {
         ctx.strokeStyle = 'rgba(50,40,28,0.7)';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
@@ -1522,21 +1529,17 @@
 
   function openCards() {
     var c = pickCards();
-    if (c.length === 0) { S.nextCard += FISH_PER_CARD; return; }
+    if (c.length === 0) return;
     S.cards = c;
     S.screen = 'cards';
     sfxCard();
   }
 
-  var showDemo = null;   // grosser Film nach der Kartenwahl
-
   function applyCard(key) {
     S.ab[key] = Math.min(MAX_LEVEL, lvl(key) + 1);
-    showDemo = { key: key, t: 2.2 };
     if (key === 'begleiter') syncBuddies();
     if (key === 'blase' && shark.shield === 0) shark.shield = 1;
     if (key === 'ruf') { while (fishes.length < fishTarget()) spawnFish(true); }
-    S.nextCard += FISH_PER_CARD;
     S.screen = 'game';
     sfxTap();
   }
@@ -1565,7 +1568,6 @@
     }
 
     if (shake > 0) shake = Math.max(0, shake - dt * 22);
-    if (showDemo) { showDemo.t -= dt; if (showDemo.t <= 0) showDemo = null; }
 
     if (S.screen !== 'game') { shake = 0; return; }
 
@@ -1871,7 +1873,7 @@
       }
 
       boss.tired = 1 - platesLeft() / boss.plates.length;
-      var dmg = 1 + lvl('panzer') + (boss.timer > 45 ? 3 : 0);
+      var dmg = 1 + lvl('panzer') + (boss.timer > 32 ? 3 : 0);
 
       for (var pi = 0; pi < boss.plates.length; pi++) {
         var pl = boss.plates[pi];
@@ -1943,7 +1945,11 @@
       S.diveFish++;
       if (S.diveFish % 5 === 0) stashDive();
       if (!boss && S.diveFish >= FISH_FOR_BOSS) spawnBoss();
-      if (S.diveFish >= S.nextCard) { openCards(); return true; }
+      if (S.diveFish >= cardThreshold(S.cardIdx)) {
+        S.cardIdx++;
+        openCards();
+        return true;
+      }
     }
     return false;
   }
@@ -2618,22 +2624,6 @@
     }
 
     drawParts();
-
-    // Direkt nach der Kartenwahl: die Wirkung einmal gross
-    if (showDemo) {
-      var sv = Math.min(1, showDemo.t / 0.5);
-      var dr = Math.min(W * 0.34, 130);
-      ctx.save();
-      ctx.globalAlpha = 0.92 * sv;
-      ctx.fillStyle = 'rgba(3,26,40,0.72)';
-      circle(W / 2, H * 0.40, dr); ctx.fill();
-      ctx.strokeStyle = abilCol(showDemo.key);
-      ctx.lineWidth = 5;
-      circle(W / 2, H * 0.40, dr); ctx.stroke();
-      drawAbilDemo(showDemo.key, W / 2, H * 0.40, dr * 0.62, abilCol(showDemo.key));
-      drawPearls(W / 2, H * 0.40 + dr * 0.78, lvl(showDemo.key), MAX_LEVEL, 5, abilCol(showDemo.key));
-      ctx.restore();
-    }
 
     // Einmal pro Tauchgang zeigen, was der Knopf dieses Hais macht
     if (S.fx.intro > 0) {
