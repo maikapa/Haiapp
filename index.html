@@ -275,8 +275,9 @@
   // Die Groesse haengt an einer durchgehenden Zahl: bestandene Tauchgaenge
   // plus Fortschritt im laufenden. Dadurch faengt ein Tauchgang immer genau
   // dort an, wo der letzte aufgehoert hat - der Hai wird nie wieder kleiner.
-  var SIZE_SPAN = 1.7;    // wie viel Groesse insgesamt dazukommen kann
-  var SIZE_RATE = 0.16;   // am Anfang waechst er schnell, spaeter langsamer
+  var SIZE_SPAN = 3.05;    // Endgroesse rund 4,05 - die Haelfte mehr als vorher
+  var SIZE_RATE = 0.0855;  // so gewaehlt, dass die ersten Tauchgaenge gleich stark wachsen
+  var BITE_CAP = 2.7;      // fuer den Beisskreis zaehlt Groesse nur bis hierhin
 
   function sizeAt(x) { return 1 + SIZE_SPAN * (1 - Math.exp(-SIZE_RATE * x)); }
 
@@ -1581,7 +1582,8 @@
 
     var sc = sharkScale();
     var len = 82 * sc;
-    var bite = len * 0.34 * (1 + 0.18 * lvl('maul'));
+    var biteLen = 82 * Math.min(sharkScale(), BITE_CAP);
+    var bite = biteLen * 0.34 * (1 + 0.18 * lvl('maul'));
     if (hasPass('filter')) bite *= 1.30;              // Walhai: breiterer Schluckbereich
     if (S.fx.riesenbiss > 0) bite *= 2;
     var speedMul = 1 + 0.14 * lvl('turbo');
@@ -2446,7 +2448,7 @@
 
     var hx = W * 0.5 + Math.sin(S.t * 0.5) * (W * 0.22);
     var hy = H * 0.26 + Math.sin(S.t * 0.9) * 14;
-    drawShark(hx, hy, 92 * stageScale(), Math.cos(S.t * 0.5) > 0 ? 0 : Math.PI,
+    drawShark(hx, hy, Math.min(92 * stageScale(), W * 0.78), Math.cos(S.t * 0.5) > 0 ? 0 : Math.PI,
               SHARKS[S.sharkIdx], { tail: Math.sin(S.t * 5), mods: sharkMods(boniLvl) });
 
     // dauerhafte Startboni
@@ -2617,9 +2619,26 @@
       ctx.restore();
     }
 
-    drawShark(shark.x, shark.y, 82 * sharkScale() * (1 + shark.pop * 0.06), shark.ang, SHARKS[S.sharkIdx],
+    drawShark(shark.x, shark.y, 82 * sharkScale(), shark.ang, SHARKS[S.sharkIdx],
               { mouth: shark.mouth, dizzy: shark.stun > 0 ? 1 : 0, tail: shark.tail,
                 mods: sharkMods(lvl) });
+
+    // Biss-Rueckmeldung: Aufleuchten und ein Ring am Maul, nie ueber die Groesse
+    if (shark.pop > 0) {
+      var pl3 = Math.min(1, shark.pop);
+      var mlen = 82 * sharkScale();
+      var mx3 = shark.x + Math.cos(shark.ang) * mlen * 0.42;
+      var my3 = shark.y + Math.sin(shark.ang) * mlen * 0.42;
+      ctx.save();
+      ctx.globalAlpha = 0.55 * pl3;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 3 + 5 * pl3;
+      circle(mx3, my3, mlen * 0.18 + (1 - pl3) * mlen * 0.30); ctx.stroke();
+      ctx.globalAlpha = 0.30 * pl3;
+      ctx.fillStyle = '#FFFFFF';
+      circle(shark.x, shark.y, mlen * 0.34); ctx.fill();
+      ctx.restore();
+    }
 
     if (shark.stun > 0) {
       ctx.save();
@@ -2771,8 +2790,12 @@
     }
     ctx.restore();
 
-    var pop = 1 + Math.sin(S.t * 3) * 0.05;
-    drawShark(W / 2, H * 0.36, Math.min(W * 0.55, 230) * pop, 0, SHARKS[S.sharkIdx],
+    ctx.save();
+    ctx.globalAlpha = 0.18 + Math.sin(S.t * 3) * 0.08;
+    ctx.fillStyle = '#FFF3B0';
+    circle(W / 2, H * 0.36, Math.min(W * 0.32, 140)); ctx.fill();
+    ctx.restore();
+    drawShark(W / 2, H * 0.36, Math.min(W * 0.55, 230), 0, SHARKS[S.sharkIdx],
               { tail: Math.sin(S.t * 5), mods: sharkMods(boniLvl) });
 
     // Befreites Tier, daneben die Perle
@@ -2878,7 +2901,7 @@
       roundRect(cx, cy, tw, th, 16); ctx.fill();
       if (open) {
         // jeder Hai in seiner tatsaechlichen Groesse
-        drawShark(cx + tw * 0.5, cy + th * 0.50, tw * 0.33 * scaleOfShark(i), 0, SHARKS[i],
+        drawShark(cx + tw * 0.5, cy + th * 0.50, Math.min(tw * 0.33 * scaleOfShark(i), tw * 0.92), 0, SHARKS[i],
                   { tail: Math.sin(S.t * 4 + i), mods: sharkMods(boniLvl) });
         var ai = SHARK_ABIL[i] ? SHARK_ABIL[i].icon : 'turbo';
         ctx.fillStyle = 'rgba(0,0,0,0.28)';
