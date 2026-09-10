@@ -275,8 +275,8 @@
   // Die Groesse haengt an einer durchgehenden Zahl: bestandene Tauchgaenge
   // plus Fortschritt im laufenden. Dadurch faengt ein Tauchgang immer genau
   // dort an, wo der letzte aufgehoert hat - der Hai wird nie wieder kleiner.
-  var SIZE_SPAN = 3.05;    // Endgroesse rund 4,05 - die Haelfte mehr als vorher
-  var SIZE_RATE = 0.0855;  // so gewaehlt, dass die ersten Tauchgaenge gleich stark wachsen
+  var SIZE_SPAN = 2.30;    // Endgroesse 3,30
+  var SIZE_RATE = 0.1151;  // so gewaehlt, dass die ersten Tauchgaenge gleich stark wachsen
   var BITE_CAP = 2.7;      // fuer den Beisskreis zaehlt Groesse nur bis hierhin
 
   function sizeAt(x) { return 1 + SIZE_SPAN * (1 - Math.exp(-SIZE_RATE * x)); }
