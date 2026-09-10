@@ -271,16 +271,24 @@
     return n;
   }
 
-  // Jeder Hai hat seine eigene Groesse und wird einzeln hochgezogen
+  // Jeder Hai hat seine eigene Groesse und wird einzeln hochgezogen.
+  // Die Groesse haengt an einer durchgehenden Zahl: bestandene Tauchgaenge
+  // plus Fortschritt im laufenden. Dadurch faengt ein Tauchgang immer genau
+  // dort an, wo der letzte aufgehoert hat - der Hai wird nie wieder kleiner.
+  var SIZE_SPAN = 1.7;    // wie viel Groesse insgesamt dazukommen kann
+  var SIZE_RATE = 0.16;   // am Anfang waechst er schnell, spaeter langsamer
+
+  function sizeAt(x) { return 1 + SIZE_SPAN * (1 - Math.exp(-SIZE_RATE * x)); }
+
   function sharkStageOf(i) { return S.sharkStage[i] || 0; }
   function myStage() { return sharkStageOf(S.sharkIdx); }
-  function stageScale() { return Math.min(1 + 0.10 * myStage(), 2.2); }
-  function scaleOfShark(i) { return Math.min(1 + 0.10 * sharkStageOf(i), 2.2); }
+  function stageScale() { return sizeAt(myStage()); }
+  function scaleOfShark(i) { return sizeAt(sharkStageOf(i)); }
 
   // im Tauchgang faengt er klein an und wird deutlich groesser
   function sharkScale() {
     var frac = Math.min(1, S.diveFish / FISH_FOR_BOSS);
-    return Math.min(stageScale() * (0.80 + 0.60 * frac), 2.6);
+    return sizeAt(myStage() + frac);
   }
 
   function sharkMods(src) {
