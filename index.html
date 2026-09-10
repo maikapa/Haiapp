@@ -74,18 +74,18 @@
 
   // Je Hai eine Passive und eine Knopf-Faehigkeit. Reihenfolge wie SHARKS.
   var SHARK_ABIL = [
-    { pass: 'turbo',     lv: 1, act: 'schwarm',      icon: 'schwarm' },   // Blauhai
-    { pass: 'maul',      lv: 1, act: 'riesenbiss',   icon: 'maul' },      // Weisser Hai
-    { pass: 'zaeh',      lv: 1, act: 'schuetteln',   icon: 'elektro' },   // Tigerhai
-    { pass: 'sog',       lv: 1, act: 'sogstoss',     icon: 'sog' },       // Hammerhai
-    { pass: 'filter',    lv: 1, act: 'schluckwelle', icon: 'welle' },     // Walhai
-    { pass: 'panzer',    lv: 1, act: 'saege',        icon: 'panzer' },    // Saegehai
-    { pass: 'begleiter', lv: 1, act: 'rufen',        icon: 'begleiter' }, // Zitronenhai
-    { pass: 'sprint',    lv: 1, act: 'doppelsprint', icon: 'turbo' },     // Schwarzspitzenhai
-    { pass: 'peitsche',  lv: 1, act: 'peitsche',     icon: 'peitsche' },  // Fuchshai
-    { pass: 'tarnung',   lv: 1, act: 'tarnen',       icon: 'tarnung' },   // Teppichhai
-    { pass: 'blase',     lv: 1, act: 'blaseauf',     icon: 'blase' },     // Groenlandhai
-    { pass: 'turbo',     lv: 2, act: 'rakete',       icon: 'turbo' }      // Makohai
+    { pass: 'turbo',     lv: 1, act: 'schwarm',      icon: 'schwarm',    demo: 'ruf' },       // Blauhai
+    { pass: 'maul',      lv: 1, act: 'riesenbiss',   icon: 'maul',       demo: 'maul' },      // Weisser Hai
+    { pass: 'zaeh',      lv: 1, act: 'schuetteln',   icon: 'elektro',    demo: 'elektro' },   // Tigerhai
+    { pass: 'sog',       lv: 1, act: 'sogstoss',     icon: 'sog',        demo: 'sog' },       // Hammerhai
+    { pass: 'filter',    lv: 1, act: 'schluckwelle', icon: 'welle',      demo: 'maul' },      // Walhai
+    { pass: 'panzer',    lv: 1, act: 'saege',        icon: 'panzer',     demo: 'panzer' },    // Saegehai
+    { pass: 'begleiter', lv: 1, act: 'rufen',        icon: 'begleiter',  demo: 'begleiter' }, // Zitronenhai
+    { pass: 'sprint',    lv: 1, act: 'doppelsprint', icon: 'turbo',      demo: 'turbo' },     // Schwarzspitzenhai
+    { pass: 'peitsche',  lv: 1, act: 'peitsche',     icon: 'peitsche',   demo: 'elektro' },   // Fuchshai
+    { pass: 'tarnung',   lv: 1, act: 'tarnen',       icon: 'tarnung',    demo: 'sog' },       // Teppichhai
+    { pass: 'blase',     lv: 1, act: 'blaseauf',     icon: 'blase',      demo: 'blase' },     // Groenlandhai
+    { pass: 'turbo',     lv: 2, act: 'rakete',       icon: 'turbo',      demo: 'turbo' }      // Makohai
   ];
   var ACT_COOLDOWN = 10;
 
@@ -1016,26 +1016,47 @@
         }
       }
     } else if (key === 'ruf') {
-      hai(-r * 0.55, 0, r * 0.7, 1);
-      var cnt = 1 + Math.floor(ph * 4);
-      for (var f3 = 0; f3 < cnt; f3++) {
-        fischchen(r * 0.15 + (f3 % 2) * r * 0.55, -r * 0.45 + Math.floor(f3 / 2) * r * 0.62, r * 0.18, -1,
-                  ['#FFB13D', '#7CE0C0', '#FF6F91', '#C6A0FF'][f3]);
+      // links wenige, rechts viele - der Vergleich erklaert es
+      var bob2 = Math.sin(S.t * 3) * r * 0.05;
+      fischchen(-r * 0.72, -r * 0.20 + bob2, r * 0.17, 1, '#FFB13D');
+      fischchen(-r * 0.50, r * 0.28 - bob2, r * 0.17, 1, '#FFB13D');
+      ctx.strokeStyle = col; ctx.lineWidth = r * 0.13;
+      var apx = -r * 0.02 + Math.sin(S.t * 3) * r * 0.06;
+      ctx.beginPath();
+      ctx.moveTo(apx - r * 0.16, 0); ctx.lineTo(apx + r * 0.16, 0);
+      ctx.moveTo(apx + r * 0.02, -r * 0.16); ctx.lineTo(apx + r * 0.18, 0);
+      ctx.lineTo(apx + r * 0.02, r * 0.16);
+      ctx.stroke();
+      var many = [[0.45, -0.55], [0.80, -0.30], [0.45, 0.02], [0.85, 0.22], [0.48, 0.52], [0.82, 0.72]];
+      for (var mf = 0; mf < many.length; mf++) {
+        fischchen(r * many[mf][0], r * many[mf][1] + Math.sin(S.t * 3 + mf) * r * 0.05,
+                  r * 0.17, 1, '#FFB13D');
       }
     } else if (key === 'panzer') {
-      var brk = ph > 0.55;
-      ctx.fillStyle = '#E8E0C8';
-      var off2 = brk ? (ph - 0.55) * r * 1.6 : 0;
-      roundRect(-r * 0.85 - off2, -r * 0.35, r * 0.75, r * 0.7, r * 0.14); ctx.fill();
-      roundRect(r * 0.10 + off2, -r * 0.35, r * 0.75, r * 0.7, r * 0.14); ctx.fill();
-      if (!brk) {
-        ctx.strokeStyle = '#3A2C1E'; ctx.lineWidth = r * 0.10;
-        ctx.beginPath();
-        ctx.moveTo(-r * 0.02, -r * 0.35);
-        ctx.lineTo(r * 0.06, 0); ctx.lineTo(-r * 0.04, r * 0.35);
-        ctx.stroke();
+      // Boss mit Plattenring, der Hai schlaegt eine heraus
+      var bx3 = r * 0.30, by3 = -r * 0.10;
+      drawBossBody({ kind: 'muschel', x: bx3, y: by3, r: r * 0.40, tired: 0 });
+      var weg = ph > 0.55;
+      for (var pl2 = 0; pl2 < 6; pl2++) {
+        var ap2 = (6.2832 / 6) * pl2 + S.t * 0.5;
+        var fly = (pl2 === 2 && weg) ? (ph - 0.55) * r * 1.4 : 0;
+        if (pl2 === 2 && ph > 0.85) continue;
+        ctx.save();
+        ctx.translate(bx3 + Math.cos(ap2) * (r * 0.70 + fly), by3 + Math.sin(ap2) * (r * 0.70 + fly));
+        ctx.rotate(ap2 + 1.5708);
+        ctx.fillStyle = (pl2 === 2 && ph > 0.45 && ph < 0.58) ? '#FFFFFF' : '#E8E0C8';
+        roundRect(-r * 0.20, -r * 0.11, r * 0.40, r * 0.22, r * 0.07); ctx.fill();
+        ctx.restore();
       }
-      hai(0, r * 0.75, r * 0.7, 1);
+      var hxp = -r * 0.95 + Math.min(0.55, ph) * r * 1.10;
+      hai(hxp, r * 0.30, r * 0.75, 1);
+      if (ph > 0.45 && ph < 0.70) {
+        ctx.fillStyle = '#FFF3B0';
+        for (var fk2 = 0; fk2 < 5; fk2++) {
+          var fa2 = fk2 * 1.25 + S.t * 8;
+          circle(bx3 + Math.cos(fa2) * r * 0.5, by3 + Math.sin(fa2) * r * 0.5, r * 0.07); ctx.fill();
+        }
+      }
     } else {
       drawAbilIcon(key, 0, 0, r * 0.8, col);
     }
@@ -1155,6 +1176,7 @@
     S.fx = { intro: 3.2 };
     ring = null;
     trail = [];
+    showDemo = null;
     shark.x = W * 0.5; shark.y = H * 0.5; shark.ang = 0;
     shark.stun = 0; shark.mouth = 0;
     shark.shield = lvl('blase') > 0 ? 1 : 0;
@@ -1223,8 +1245,8 @@
     var p = b.plates[i], a;
     if (b.armor === 'reihen') {
       var col = i % 4, row = i < 4 ? -1 : 1;
-      _pp.x = b.x + (col - 1.5) * 44;
-      _pp.y = b.y + row * b.plateR * 0.84;
+      _pp.x = b.x + (col - 1.5) * 40;
+      _pp.y = b.y + row * b.plateR * 0.62;
     } else if (b.armor === 'schild') {
       var cc = i % 2, rr2 = Math.floor(i / 2);
       var sa2 = b.shieldAng || 0;
@@ -1506,8 +1528,11 @@
     sfxCard();
   }
 
+  var showDemo = null;   // grosser Film nach der Kartenwahl
+
   function applyCard(key) {
     S.ab[key] = Math.min(MAX_LEVEL, lvl(key) + 1);
+    showDemo = { key: key, t: 2.2 };
     if (key === 'begleiter') syncBuddies();
     if (key === 'blase' && shark.shield === 0) shark.shield = 1;
     if (key === 'ruf') { while (fishes.length < fishTarget()) spawnFish(true); }
@@ -1540,6 +1565,7 @@
     }
 
     if (shake > 0) shake = Math.max(0, shake - dt * 22);
+    if (showDemo) { showDemo.t -= dt; if (showDemo.t <= 0) showDemo = null; }
 
     if (S.screen !== 'game') { shake = 0; return; }
 
@@ -1946,7 +1972,18 @@
     else if (a === 'blaseauf') { shark.shield = 1; shark.shieldT = 0; burst(shark.x, shark.y, '#8ECBFF', 18); }
     else if (a === 'sogstoss') { S.fx.sogstoss = 1.8; burst(shark.x, shark.y, '#7CE0C0', 22); }
     else if (a === 'tarnen') { S.fx.tarnen = 3.5; }
-    else if (a === 'schwarm') { for (i = 0; i < 7; i++) spawnFish(true); }
+    else if (a === 'schwarm') {
+      // direkt um den Hai herum, damit man es sieht
+      for (i = 0; i < 7; i++) {
+        spawnFish(false);
+        var nf = fishes[fishes.length - 1];
+        var aa = (6.2832 / 7) * i + Math.random() * 0.4;
+        var rr4 = 70 + Math.random() * 60;
+        nf.x = Math.max(30, Math.min(W - 30, shark.x + Math.cos(aa) * rr4));
+        nf.y = Math.max(90, Math.min(H - 40, shark.y + Math.sin(aa) * rr4));
+        burst(nf.x, nf.y, nf.col, 8);
+      }
+    }
     else if (a === 'rufen') { S.fx.rufen = 12; syncBuddies(); }
     else if (a === 'schluckwelle') {
       var got = 0;
@@ -2582,6 +2619,22 @@
 
     drawParts();
 
+    // Direkt nach der Kartenwahl: die Wirkung einmal gross
+    if (showDemo) {
+      var sv = Math.min(1, showDemo.t / 0.5);
+      var dr = Math.min(W * 0.34, 130);
+      ctx.save();
+      ctx.globalAlpha = 0.92 * sv;
+      ctx.fillStyle = 'rgba(3,26,40,0.72)';
+      circle(W / 2, H * 0.40, dr); ctx.fill();
+      ctx.strokeStyle = abilCol(showDemo.key);
+      ctx.lineWidth = 5;
+      circle(W / 2, H * 0.40, dr); ctx.stroke();
+      drawAbilDemo(showDemo.key, W / 2, H * 0.40, dr * 0.62, abilCol(showDemo.key));
+      drawPearls(W / 2, H * 0.40 + dr * 0.78, lvl(showDemo.key), MAX_LEVEL, 5, abilCol(showDemo.key));
+      ctx.restore();
+    }
+
     // Einmal pro Tauchgang zeigen, was der Knopf dieses Hais macht
     if (S.fx.intro > 0) {
       var iv = Math.min(1, S.fx.intro / 0.6);
@@ -2590,10 +2643,17 @@
       var px2 = W / 2 + (abx - W / 2) * gz * 0.55;
       var py2 = H * 0.42 + (aby - H * 0.42) * gz * 0.55;
       ctx.save();
-      ctx.globalAlpha = 0.85 * iv;
-      ctx.fillStyle = 'rgba(3,26,40,0.55)';
-      circle(px2, py2, 62 - gz * 14); ctx.fill();
-      drawAbilIcon(myAbil().icon, px2, py2, 30 - gz * 8, abilCol(myAbil().icon));
+      ctx.globalAlpha = 0.9 * iv;
+      ctx.fillStyle = 'rgba(3,26,40,0.72)';
+      circle(px2, py2, 78 - gz * 24); ctx.fill();
+      ctx.strokeStyle = abilCol(myAbil().icon);
+      ctx.lineWidth = 4;
+      circle(px2, py2, 78 - gz * 24); ctx.stroke();
+      if (gz < 0.6) {
+        drawAbilDemo(myAbil().demo, px2, py2, (78 - gz * 24) * 0.62, abilCol(myAbil().icon));
+      } else {
+        drawAbilIcon(myAbil().icon, px2, py2, (78 - gz * 24) * 0.5, abilCol(myAbil().icon));
+      }
       ctx.strokeStyle = abilCol(myAbil().icon);
       ctx.lineWidth = 4;
       ctx.globalAlpha = 0.6 * iv;
