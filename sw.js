@@ -1,6 +1,6 @@
 // Version bei jedem Deployment um eins hochzaehlen.
 // Nur diese Zahl aendern - der Rest bleibt gleich.
-var APP_VERSION = 2;
+var APP_VERSION = 4;
 
 var CACHE = 'hai-v' + APP_VERSION;
 var FILES = [
